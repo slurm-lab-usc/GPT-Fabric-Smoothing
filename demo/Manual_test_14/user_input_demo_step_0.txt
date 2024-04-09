@@ -1,0 +1,15 @@
+1. I pick [365,277] because it seems to be an actual corner of the fabric and pulling it away from the center point can help unflatten the fabric.
+
+2. No previous picking point information is given.
+
+
+3. The center point is at [358,362], the chosen picking point is at [365,277]. The center point is to the 6/4 * pi of the picking point,the direction starting from the center point to the picking point is 2/4 * pi.
+
+4. Since the direction starting from the center point to the picking point is 2/4 * pi, I will pick 2/4 * pi as my moving direction.
+
+
+
+
+1. Pick point: [365,277]
+2. Moving direction: 2/4*pi
+3. Moving distance: 0.5

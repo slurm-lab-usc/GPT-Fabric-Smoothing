@@ -1,0 +1,4 @@
+coverage: 0.506
+center point: [290, 393]Pick point:[ 0.07784914  0.005      -0.09616658]
+Moving direction:2/4*pi
+Moving distance:0.5

@@ -1,0 +1,15 @@
+This is the coverage of the cloth now:0.977
+I am providing you the processed image of the current situation of the cloth to be smoothened. The blue points that you can see is the corners detected by Shi-Tomasi corner detector and here is their corresponding pixel:
+
+The corners are :[[526 ,569],[268 ,370],[306 ,593],[495 ,349],[326 ,591],[350 ,587],[374 ,583],[398 ,579],[423 ,575],[443 ,572]]
+
+And the black point represents the center point of the cloth which is the center point of the cloth's bounding box. Its pixel is [397, 471]
+
+The red points are the pick point chosen last time and its symmetric point. Its pixel is [526,569], and it's symmetric point's pixel is [268,373]. It's advised to pick points that are not near those two points.
+
+Judging from the input image and the pixel coordinates of the corners and center point, please making the inference following the strategy and output the result using the required format.
+
+
+
+
+

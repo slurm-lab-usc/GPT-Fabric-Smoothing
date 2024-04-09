@@ -1,0 +1,13 @@
+1. I pick [480,344] because it seems to be an actual corner of the fabric and pulling it away from the center point can help unflatten the fabric.
+
+2. The previous picking pixel is [365,104], and it's symmetric point's pixel is [349,500]. The chosen picking point is not within the 100 pixel range of those two points, thus it's not near to those two points.
+
+3. The center point is at [357,302], the chosen picking point is at [480,344]. The center point is to the 3/4 * pi of the picking point,the direction starting from the center point to the picking point is 7/4 * pi.
+
+4. Since the direction starting from the center point to the picking point is 7/4 * pi, I will pick 7/4 * pi as my moving direction.
+
+
+
+1. Pick point:[480,344]
+2. Moving direction:7/4*pi
+3. Moving distance:0.5

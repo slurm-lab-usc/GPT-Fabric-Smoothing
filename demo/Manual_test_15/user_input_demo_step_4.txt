@@ -1,0 +1,2 @@
+coverage: 0.919
+center point: [523, 304]
