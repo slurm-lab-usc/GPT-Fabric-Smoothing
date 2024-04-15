@@ -42,11 +42,17 @@ headers = {
 
 
 def main():
-    # set the parameters
+    """
+    This is the main function for running the cached config tests. 
+    We use this script to test the performance of different methods on the same set of initial states.
+    It's recommened to use this script to test the performance of the methods on the cached initial states to see the performance.
+    """
+    
+    # 0. set the parameters
     parser = argparse.ArgumentParser(description='Process some integers.')
     # ['ClothFlattenGPTRGB','ClothFlattenGPTPC','PassWater', 'PourWater', 'PourWaterAmount', 'RopeFlatten', 'ClothFold', 'ClothFlatten', 'ClothDrop', 'ClothFoldCrumpled', 'ClothFoldDrop', 'RopeConfiguration']
     parser.add_argument('--env_name', type=str, default='ClothFlattenGPTRGB')
-    parser.add_argument('--cache_state_path',type=str,default='/cloth_flatten_states_RGBD')
+    parser.add_argument('--cache_state_path',type=str,default='/cloth_flatten_states_40_test')
     parser.add_argument('--headless', type=int, default=1, help='Whether to run the environment with headless rendering')
     parser.add_argument('--num_variations', type=int, default=10, help='Number of environment variations to be generated')
     parser.add_argument('--save_obs_dir', type=str, default='./10_env_tests', help='Path to the saved observation')    
@@ -66,9 +72,9 @@ def main():
 
     args = parser.parse_args()
     
-    
+    # 0.1 set the method based on the method name
     methods={
-        
+        # The method proposed in the paper
         "RGBD_simple":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":True,
@@ -77,7 +83,7 @@ def main():
             "img_size":720,
             "corner_limit":15,            
         },
-        
+        # With the depth reasoning, deprecated
         "RGBD_depth_reasoning":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":True,
@@ -87,6 +93,7 @@ def main():
             "img_size":720,
             "corner_limit":15, 
         },
+        # Add ICL to the method
         "RGBD_ICL":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":True,
@@ -97,7 +104,7 @@ def main():
             "in_context_learning":True,
             "demo_dir":"./demo/Manual_test_14",            
         },
-        
+        # Remove the image preprocessing module and the evaluation module
         "RGBD_naive":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":False,
@@ -110,7 +117,7 @@ def main():
             "naive":True, 
             
         },
-        
+        # Remove the evaluation module
         "RGBD_no_recon":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":False,
@@ -123,7 +130,7 @@ def main():
             "re_consider" :False,
             
         },
-        
+        # Remove the picking point approximity check from the evaluation module
         "RGBD_no_last_point":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":False,
@@ -132,7 +139,7 @@ def main():
             "img_size":720,
             "corner_limit":15,
         },
-        
+        # Totally random method. No GPT reasoning
         "RGBD_total_random":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":False,
@@ -147,6 +154,7 @@ def main():
     }
     method=methods[args.method_name]
     
+    # 0.2 set the environment
     env_kwargs = env_arg_dict[args.env_name]
     # Generate and save the initial states for running this environment for the first time
     env_kwargs['use_cached_states'] = True
@@ -160,7 +168,7 @@ def main():
     else:
         print("using cached states")
     
-        
+     
     cur_dir = osp.dirname(osp.abspath(__file__))  
     cache_state_path = cur_dir+args.cache_state_path
         
@@ -170,7 +178,7 @@ def main():
     env.reset()
     
     
-    
+    # 0.3 set the paramters for manipulation based on method configuration
     save_obs_dir=osp.join(args.save_obs_dir,args.method_name)
     
     need_box=method['need_box'] if 'need_box' in method else False
@@ -188,8 +196,9 @@ def main():
     re_consider=method['re_consider'] if 're_consider' in method else True
     gpt_reasoning=method['gpt_reasoning'] if 'gpt_reasoning' in method else True
     
-
+    # 1. start the test
     for i in range(args.starting_config,env.num_variations):
+        # Record both the highest coverage and the final coverage. We report the final coverages.
         highest_coverages=[]
         final_coverages=[]
         for j in range(args.reps):
@@ -215,8 +224,8 @@ def main():
                    
                     
 
-            save_obs_dir_env_main=osp.join(save_obs_dir,f"state_{str(i)}")
-            save_obs_dir_env=osp.join(save_obs_dir_env_main,f"rep_{str(j)}")
+            save_obs_dir_env_main=osp.join(save_obs_dir,f"state_{str(i)}") # The folder where each rep results of the same starting config are saved
+            save_obs_dir_env=osp.join(save_obs_dir_env_main,f"rep_{str(j)}") # The folder where the results of j-th rep are saved
             
             if not os.path.exists(save_obs_dir_env):
                 os.makedirs(save_obs_dir_env)
@@ -224,6 +233,7 @@ def main():
             else:
                 print(f"Directory already exists at {save_obs_dir_env}, content there will be update\n")
             
+            # Get the goal depth and goal image
             env.reset(config_id=i)
             env._set_to_flat()
             env.action_tool.hide()
@@ -240,10 +250,10 @@ def main():
             
             
             
-            
+            # 1.1 start the manipulation
             frames = [env.get_image(img_size, img_size)]
             coverages=[]
-
+            # 1.2 set the manipulation method
             if "random" in args.method_name:
                 manipulation=RGB_manipulation(
                 env=env,
@@ -272,7 +282,7 @@ def main():
                 
             )
                 
-                
+            # 1.3 start the manipulation with args.trails steps 
             messages=[]
             last_step_info=None
             step=0
@@ -311,7 +321,7 @@ def main():
                         json_string=json.dumps(messages)
                         file.write(json_string+'\n')
                 
-                
+                # 1.4 save the coverage and improvement of this step
                 coverages.append([new_coverage,improvement])
                 
 
@@ -324,10 +334,11 @@ def main():
                 print('--------------------------------------------------------\n')
 
                 
-            
+            # Record the best and final coverage of this rep (episode)
             best_res=max(coverages, key=lambda x: x[1])
             final_res=coverages[-1]
             
+            # Record the result of this rep and concat with the results of other reps under same starting config
             highest_coverages.append(best_res)
             final_coverages.append(final_res)
             
@@ -350,7 +361,7 @@ def main():
         norm_coverage= [item[0] for item in highest_coverages]
         norm_improvements = [item[1] for item in highest_coverages]
 
-        # Calculate the mean and standard deviation
+        # Calculate the mean among the reps under same starting config
         mean_value_0 = np.mean(norm_coverage)
         mean_value_1 = np.mean(norm_improvements)
         highest_coverages.append([mean_value_0,mean_value_1])
@@ -376,18 +387,6 @@ def main():
             writer=csv.writer(file)
             writer.writerows(final_coverages)
         print('coverage message generated and save to {}'.format(coverage_message_path_final))
-
-                
-            
-                
-            
-
-                    
-            
-
-        
-
-
 
 if __name__ == '__main__':
     main()

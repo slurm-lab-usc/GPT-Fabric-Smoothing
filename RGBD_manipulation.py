@@ -41,13 +41,18 @@ headers = {
     
 
 class RGBD_manipulation_part_obs(RGB_manipulation):
+    """
+    This is the manipulation class for the RGBD observation input (paper's method).
+    Added attributes:
+        re_consider: whether to enable the evaluation module
+        in_context_learning: whether to use in-context learning
+        demo_dir: the directory of the demonstration data
+    
+    """
+    
     def __init__(self,env,env_name,obs_dir,goal_image,goal_config,goal_depth,re_consider=True,in_context_learning=False,demo_dir="./demo/Manual_test14",img_size=720):
         
         super().__init__(env=env,env_name=env_name,obs_dir=obs_dir,goal_image=goal_image,goal_config=goal_config,img_size=img_size)
-        self.goal_depth=goal_depth
-        top,bottom,left,right=self.get_bounds(self.goal_depth)
-        self.goal_height=top-bottom
-        self.goal_width=right-left
         self.re_consider=re_consider
         self.in_context_learning=in_context_learning
         self.demo_dir=demo_dir
@@ -80,85 +85,6 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
        
 
 
-    def get_corners_img(self,img_path,depth,specifier,corner_limit=10):
-        """
-        Get the corners of the fabric in the image and save the image with corners marked.
-        Input:
-            img_path: the path of the image
-            specifier: the specifier (usually should be the number of step) of the observation.
-            corner_limit: the limit of the number of corners to be detected.
-        Output:
-            new_corners: the corners detected in the image (in the format of np array with shape [corner limit, 2]: [x1, y1], [x2, y2], ...)
-            img: the image with corners marked
-        """
-        
-        img = cv.imread(img_path)
-        img_copy=img.copy()
-        
-        ########################################################
-        # Turn the backside of the fabric into white to find more accurate corners
-        lower_pink = np.array([140, 50, 75])
-        upper_pink = np.array([170, 255, 255])
-
-        # Convert the image from BGR to HSV color space
-        hsv_image = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-
-        # Create a mask for pink color
-        mask = cv.inRange(hsv_image, lower_pink, upper_pink)
-
-        # Define the blue color you want to change to
-        blue_color = np.array([255, 255, 255], dtype=np.uint8)
-
-        # Change the pink areas to blue
-        img[mask != 0] = blue_color
-        
-        img = cv.cvtColor(img, cv.COLOR_HSV2RGB)
-        ############################################################
-        
-        
-        
-        gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-        
-        corners = cv.goodFeaturesToTrack(gray,corner_limit,0.1,20)
-        corners = np.int0(corners)# shape: corner_limit, 1 , 2
-        
-        new_corners=np.squeeze(corners,axis=1)
-        
-        save_name=osp.join(self.obs_dir,specifier)# specifier should be used for step count e.g.: specifier="step_1_"
-        with open(save_name+"_corners.txt", "w+") as p:
-            p.write(f"The corners are :{new_corners}")   
-
-            for i in corners:
-                x,y = i.ravel()
-                cv.circle(img_copy,(x,y),3,255,-1)
-
-            
-        cv.imwrite(img_path,img_copy)
-        
-        
-        
-        return new_corners,img
-    
-    
-    def get_bounds(self,depth):
-        """
-        Get the bounds of the fabric with the help of the depth image.
-        Input:
-            depth: the depth image of the fabric
-        Output:
-            top: the top bound of the fabric
-            bottom: the bottom bound of the fabric
-            left: the left bound of the fabric
-            right: the right bound of the fabric
-        """
-        locations=np.nonzero(depth)
-        top=max(locations[0])
-        bottom=min(locations[0])
-        
-        left=min(locations[1])
-        right=max(locations[1])
-        
-        return top,bottom,left,right
     
     def get_center_point_bounding_box(self,img_path,depth,need_box=False):
         """
@@ -218,10 +144,6 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
 
     
 
-
-
-
-
     def response_process(self,response,messages=None):
         """
         Process the response from GPT to get the picking point, direction, distance. Map the picking pixel to 3D coordinate
@@ -242,14 +164,15 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         """
         
         if 'choices' not in response.json():
+            # GPT has some common error.
             print(response.json())
-            
-            
             return None, None,None,None
         else:
+            # GPT doesn't run into error.
             response_message=response.json()['choices'][0]['message']['content']
             print(response_message)
             
+            # Use regular expression to extract the pick point, direction and distance.
             pick_pattern = r'Pick point:.*?\[(.*?)\]'
             direction_pattern=r'Moving direction:.*?(\d+/\d+)'
             distance_pattern=r'Moving distance:.*?(\d+\.?\d*)'
@@ -258,25 +181,18 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
             direction_match = re.search(direction_pattern, response_message)
             distance_match = re.search(distance_pattern, response_message)
 
+            # Get pick point (pixel) from GPT response and transform it to 3D coordinate.
             if not pick_match:
                 return None,None,None,None
-            
-            
-            
-            
-            
-            
-            
             pick_coords = [int(val) for val in pick_match.group(1).split(',')]
             pick_pixel=pick_coords
-
-            # pick_coords_new=camera_utils.get_world_coord_from_pixel(pick_coords,self.depth,self.env)
-
-            pick_coords=camera_utils.find_nearest(self.pixel_coords,pick_coords[1],pick_coords[0])
             
-            pick_coords=self.pixel_coords[pick_coords[0]][pick_coords[1]]
+            pick_coords=camera_utils.find_nearest(self.pixel_coords,pick_coords[1],pick_coords[0])# map the pixel to 3D coordinate
+            
+            pick_coords=self.pixel_coords[pick_coords[0]][pick_coords[1]] # The 3D coordinate of the picking point
             
              
+            # Get moving direction and distance from GPT response.
             moving_direction = direction_match.group(1) if direction_match else None
             if moving_direction is None:
                 return None,None,None,None
@@ -289,7 +205,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
             if moving_distance is None:
                 return None,None,None,None
 
-            
+            # Calculate the placing point based on the picking point, moving direction and distance.
             curr_config=self.env.get_current_config()
             dimx,dimy=curr_config['ClothSize']
             size=max(dimx,dimy)*self.env.cloth_particle_radius
@@ -306,7 +222,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
             place_coords[2]+=delta_y
             
             
-            
+            # calculate the pixel coordinate of the placing point
             pixel_size=max(self.goal_height,self.goal_width)
             delta_x_pixel=int(pixel_size*np.cos(actual_direction)*moving_distance)
             delta_y_pixel=int(pixel_size*np.sin(actual_direction)*moving_distance)
@@ -376,21 +292,32 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         
         It will return the check results of both direction check and picking point appoximity check with the visualization of the action.
         
+        Input:
+            response_message: the response message from GPT
+            place_pixel: the pixel coordinate of the placing point
+            pick_pixel: the pixel coordinate of the picking point
+            center: the pixel coordinate of the center point
+            img: the image to be visualized
+            depth_img: the depth image of the fabric
+            last_pick_point: the pixel coordinate of the last picking point
+            last_pick_point_oppo: the pixel coordinate of the symmetric point of the last picking point
         
-        
-        
-        
+        Output:
+            correct_message: the correction message to be sent to the GPT for re-consideration
+            check_result: whether the picking point is close to the last picking point and the move direction is approximately correct
+            direction_check: whether the move direction is approximately correct
+
         """
+        # 0. setup the parameters
         
-        
+        # Whether to check the directions only.  
+        # **This is for ablation study, normally should be false**
         check_directions_only=False
         
-        img=self.vis_result(place_pixel=place_pixel,pick_pixel=pick_pixel,img=img.copy())
-        
+        # Visualization of the predicted action
+        img=self.vis_result(place_pixel=place_pixel,pick_pixel=pick_pixel,img=img.copy())        
         vis_result_path=self.paths['processed vis image']
         cv.imwrite(vis_result_path,img)
-        
-        
         encoded_vis_result=encode_image(vis_result_path)
         
         
@@ -409,14 +336,20 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         """
         
         if self.depth_reasoning:
+            # if the depth_reasoning is enabled, the depth image will be provided to the recal module.
+            # Normally this will be false as the depth_reasoning method is not used in the paper due to much worse performance.
             text_correct_message+="""
             I am also providing you the visualization result of your predicted pick-and-place action on the corresponding depth image. In the depth image you can also see a green circle which is your predicted picking point and a green arrow which pointing to the your predicted move direction and a purple circle at the end of that arrow denoting the estimated placing point.\n 
             """
-            
+        
+        
+        # 1. Pick point approximity check    
         if check_directions_only:
             last_pick_point=None
         
+        
         if last_pick_point is not None:
+            # Check the distance between the predicted picking point and the last picking point and its symmetric point.
             pick_check=(abs(pick_pixel[0]-last_pick_point[0])>50) or (abs(pick_pixel[1]-last_pick_point[1])>50)
             pick_oppo_check=(abs(pick_pixel[0]-last_pick_point_oppo[0])>50) or (abs(pick_pixel[1]-last_pick_point_oppo[1])>50)
             
@@ -432,39 +365,32 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
 
             text_correct_message+=position_message
         else:
+            # If no last picking point is provided, skip the checking of the picking point (set the result to be true).
             pick_check=True
             pick_oppo_check=True
             
             
             
-            
+        # 2. Direction check    
         direction_pattern=r'Moving direction:.*?(\d+/\d+)'
         direction_match = re.search(direction_pattern, response_message)
         moving_direction = direction_match.group(1)
         numerator, denominator = moving_direction.split('/')
         moving_direction=float(numerator)/float(denominator)
-        
         print(f"the moving_direction is {moving_direction} with type {type(moving_direction)}")
-
         
-        
+        # 2.a Calculate the direction from the center point to the picking point
         direction=self._cal_direction(center,pick_pixel)
-        
         print(f"the cal_direction is {direction} with type {type(direction)}")
         
         
-        
+        # 2.b Check whether the predicted direction is close to the calculated direction (+/- 0.25*pi)
         difference=np.abs(moving_direction-direction)
-        
         print(f"difference is {difference}")
 
-        
         possible_directions=[]
         for i in range(1,9):
             possible_directions.append(i/4)
-        
-        
-        
         
         possible_directions=np.array(possible_directions)
         possible_directions_diff=np.abs(possible_directions-direction)
@@ -494,7 +420,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         
         
         
-        
+        # 3. Get the result of both checks and generate the correction message w.r.t different check results.
         if direction_check and pick_check and pick_oppo_check:
             direction_message="\n By calculating the pick point you choose and center point, the direction starting from the center point to the picking point is roughly "+str_direction+". The direction you predicted falls in the acceptable range."
         elif pick_check and pick_oppo_check:
@@ -502,50 +428,10 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         else:
             direction_message="\n The picking point is not an accept choice as it's near to last picking point or it's symmetric point. The predicted moving direction is also incorrect."
             
-            
-            
-
-        
         check_result=direction_check and pick_oppo_check and pick_check
-            
-        
-        
-        # possible_directions=np.array(possible_directions)
-        # possible_directions=np.abs(possible_directions-direction)
-        
-        # choice=np.argmin(possible_directions)
-        # str_direction=self.directions[choice]
-        
-        
-        # left=choice-1
-        # right=choice+2
-        
-        # if left<0:
-        #     left=8+left
-        # if right>8:
-        #     right=right-8
-        # if left<right:
-        #     str_direction_list=self.directions[left:right]
-        # else:
-        #     str_direction_list=self.directions[left:]+self.directions[:right]
-        
-        # str_direction_list=f"[{','.join(str_direction_list)}]"
-        
-        
-        # direction_message="\n By calculating the pick point you choose and center point, the direction starting from the center point to the picking point is roughly "+str_direction+". If the direction you predicted falls in this direction list: "+str_direction_list+" , you can still use the your predicted direction.\n However, i.e. if the direction you predicted is not in this direction list: "+str_direction_list+", you should use "+str_direction+"as your moving direction."
-        
-        
-        
-        
         
         text_correct_message+=direction_message
-                    
-            
-            
-        
 
-        
-        
         correction_message="""
         
         Based on the assist of previous calculation, do you think your predicted move will help flatten the fabric? If so, you can repeat your answer. If you don't think this move will help flatten the fabric, you should give a new prediction following the same output format.
@@ -554,16 +440,6 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         
         text_correct_message+=correction_message
         
-        
-        # distance_pre=(pick_pixel[0]-center[0])*(pick_pixel[0]-center[0])+(pick_pixel[1]-center[1])*(pick_pixel[1]-center[1])
-        # distance_after=(place_pixel[0]-center[0])*(place_pixel[0]-center[0])+(place_pixel[1]-center[1])*(place_pixel[1]-center[1])
-        
-        
-        
-        
-        
-        # if distance_after<distance_pre:
-        #     text_correct_message+="\n Also, from the move you predicted, the picking point is not pulled away from the center point but closer to the center point, please reconsider."
         
         
         text_content={
@@ -577,8 +453,6 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                 "detail":"high"
                 }
         }
-        
-        
        
         correct_message.append(text_content)
         correct_message.append(image_content)
@@ -586,7 +460,20 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         
         
     def get_pick_place(self,messages,headers):
+        """
+        This function is used to get the picking point and placing point from GPT with correct format.
+        Input:
+            messages: the conversation history. Normally it will include the system prompt.
+            headers: the headers for the GPT API
+        Output:
+            pick_point: the 3D coordinate of the picking point
+            place_point: the 3D coordinate of the placing point
+            pick_pixel: the pixel coordinate of the picking point
+            place_pixel: the pixel coordinate of the placing point
+            response_message: the response message from GPT
+        """
         
+        # 0. Setup the parameters and GPT agent
         payload={
             "model":"gpt-4-vision-preview",
             "messages":messages,
@@ -598,22 +485,23 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         }
         re_cal=True
         
-        
+        # 1. Deal with different types of errors from GPT
         while re_cal:
             response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
                     
-            # print(response.json())
             pick_point,place_point,pick_pixel,_=self.response_process(response)
             
-            if 'choices' in response.json():                
+            if 'choices' in response.json():
+                # GPT doesn't run into error.                
                 response_message=response.json()['choices'][0]['message']['content']
                 
                 if pick_point is not None:
-                    
+                    # GPT gives the correct output
                     re_cal=False
                     break
-                
                 else:
+                    # GPT gives the output with format error 
+                    # (The result doesn't contain pick point, direction, distance or not in the desired format)
                     re_cal=True
                     time.sleep(30)
                     format_error_message="The output given by you has format error, please output your result according to the given format."
@@ -623,8 +511,6 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                         {
                             "role":"assistant",
                             "content":response_message,
-                                
-
                         })
                         
                         
@@ -641,20 +527,11 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                     )
                     
             else:
+                # GPT runs into error. In our tests sometimes it's due to "inappropriate content" or "model error"
                 re_cal=True
                 time.sleep(30)
                 format_error_message="I am passing you only two images with one being a fabric lying on the black surface and another is the depth image of that fabric with the cloth being in grayscale and the background being yellow (near brown). There's no inapproriate content. "
-                    
-                # messages.append(
-                    
-                #     {
-                #         "role":"assistant",
-                #         "content":response_message,
-                            
-
-                #     })
-                    
-                    
+     
                 messages.append(    
                     {
                         "role":"user",
@@ -667,7 +544,6 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                     }
                 )
 
-        
         place_pixel=camera_utils.get_pixel_coord_from_world(place_point,(self.img_size,self.img_size),self.env)
         
         place_pixel=place_pixel.astype(int)
@@ -680,7 +556,10 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                                          ):
     
         
-        
+        """
+        This function is used to build the in-context learning prompt for the GPT.
+        Note that we didn't use this in the paper as the in-context learning is not helping in our case (perhaps with some dataset creation techniques it will work).
+        """
         # image_paths=[]
         input_image_paths=[]
         output_image_paths=[]
@@ -772,9 +651,30 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                     last_step_info,
                     direction_seg=8,
                     distance_seg=4):
+        """
+        This function is used to communicate with the GPT to get the actual pick-and-place action for implementation.
+        Input:
+            headers: the headers for the GPT API
+            messages: the conversation history
+            encoded_image: the encoded image to be sent to the GPT
+            corners: the corners detected by the Shi-Tomasi corner detector
+            center_point_pixel: the pixel coordinate of the center point of the fabric
+            curr_coverage: the current coverage of the fabric
+            last_step_info: the information of the last step (coverage, pick point, place point)
+            direction_seg: the number of segments for the direction
+            distance_seg: the number of segments for the distance
+            
+            
+        Output:
+            pick_point: the 3D coordinate of the picking point
+            place_point: the 3D coordinate of the placing point
+            messages: the updated conversation history
+            last_step_info: the information of the this step
+        """
         
+        
+        # 0. Setup the parameters
         content=[]
-        
         corner_str_lst=[]
         
         for corner in corners:#perhaps do sth here
@@ -786,9 +686,10 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         
         center_point_str=f"[{center_point_pixel[0]}, {center_point_pixel[1]}]"
         
-        
+        # 1. prepare the user prompt for input
         
         if last_step_info is None:
+            # The first step
             coverage_message="This is the coverage of the cloth now:"+str(curr_coverage)+".\n"
             last_pick_point=None
             last_pick_point_oppo=None
@@ -797,10 +698,9 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
             "text":coverage_message+"I am providing you the processed image of the current situation of the cloth to be smoothened. The blue points that you can see is the corners detected by Shi-Tomasi corner detector and here is their corresponding pixel:\n"+corners_str+"\n\nAnd the black point represents the center point of the cloth which is the center point of the cloth's bounding box. Its pixel is "+center_point_str+"\n\nJudging from the input image and the pixel coordinates of the corners and center point, please making the inference following the strategy and output the result using the required format."
         }
         else:
+            # This step is not the first step
             
             coverage_change=curr_coverage-last_step_info['coverage']
-            
-            # coverage_message="This is the coverage of the cloth now:"+str(curr_coverage)+". With the action you predicted last time, the coverage of the fabric changed by "+str(coverage_change)+". If it's positive, the coverage increased otherwise the coverage drops.\n"
             coverage_message="This is the coverage of the cloth now:"+str(curr_coverage)+".\n"
             
             last_pick_point=last_step_info['place_pixel']
@@ -819,7 +719,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                         
         
             
-        
+        # 1.b If the goal configuration is enabled, add the goal configuration information to the user prompt
         if self.goal_config:
             goal_config_information="\nTo help you with the task while planning, the image also has a white rectangular box around the cloth representing the goal configuration of the cloth which is the flattened cloth's outline. Please use it for reference"
             # goal_config_information could have the pixel values of the bounding box
@@ -841,15 +741,10 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         }
         messages.append(message)
         
-        # new_messages=[messages[0]]
-        # new_messages.append(message)
         
-        
-        
+        # 2. Pass the user prompt and system prompt to GPT and get the response
         pick_point,place_point,pick_pixel,place_pixel,response_message=self.get_pick_place(messages=messages,headers=headers)
         
-        
-
         messages.append(
             {
                 "role":"assistant",
@@ -857,24 +752,15 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
             }
         )
         
-        # new_messages.append(
-        #     {
-        #         "role":"assistant",
-        #         "content":response_message,
-        #     }
-            
-        # )
         
-        
+        # 3. Use the recal (Evaluation) module to check the correctness of the predicted action
         
         if self.re_consider:
-            steps=0
-            
-            
-            
+            steps=0 # set a counter to limit the number of recal steps
             recon_message,check_result,direction_check=self.recal(response_message=response_message,place_pixel=place_pixel,pick_pixel=pick_pixel,center=center_point_pixel,img=self._step_image, last_pick_point=last_pick_point,last_pick_point_oppo=last_pick_point_oppo)
             
             while not check_result:
+                # If the response fails to pass the evalution, ask GPT to reconsider the action with added correction message.
                 messages.append({
                     "role":"user",
                     "content":recon_message,
@@ -889,17 +775,19 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                 )
                 steps+=1
                 if steps>=3 and direction_check:
+                    # We check both direction and pick point approximity for at most 3 times. After 3 evalutions, we only check on the direction. 
                     break
                 recon_message,check_result,direction_check=self.recal(response_message=response_message,place_pixel=place_pixel,pick_pixel=pick_pixel,center=center_point_pixel,img=self._step_image, last_pick_point=last_pick_point,last_pick_point_oppo=last_pick_point_oppo)
                 
                 
         
         
-        
+        # 4. Visualize the result of the pick-and-place action (before actual interaction)
         img=self.vis_result(place_pixel=place_pixel,pick_pixel=pick_pixel,img=self._step_image)
         vis_result_path=osp.join(self.obs_dir,"Vis_result_"+self._specifier+".png")
         cv.imwrite(vis_result_path,img)
-            
+        
+        # 5. Update the last_step_info    
         last_step_info={
             "pick_pixel":pick_pixel,
             "place_pixel":place_pixel,
@@ -920,7 +808,9 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                     last_step_info,
                     direction_seg=8,
                     distance_seg=4):
-        
+        """
+        Used for depth_reasoning method. Deprecated.
+        """
         content=[]
         
         corner_str_lst=[]
@@ -1049,19 +939,14 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         
         return pick_point,place_point,messages,last_step_info
 
-    def aug_background(self,img,depth,color=[40,40,40]):
-        mask = depth == 0    
-        for c in range(3):  # Loop through each color channel
-            img[:, :, c][mask] = color[c]
-                            
-                        
-        return img
-            
-        
-        
 
+        
 
     def single_step(self, frames, last_step_info=None,corner_limit=10,need_box=True,  direction_seg=8, distance_seg=4, specifier="init"):
+        """
+        This is used to generate the pick-and-place action for a single step manually.
+        We used this to generate the demonstration data for the ICL and finetuning.
+        """
         
         default_pos=np.array([0.0,0.2,0.0]).squeeze()
         operation_height=0.1
@@ -1283,10 +1168,6 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         
            
 
-        
-        
-        
-    
     
     def gpt_single_step(self,headers,
                     frames=[],
@@ -1301,6 +1182,31 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                     direction_seg=8,
                     distance_seg=4,
                     specifier="init"):
+        
+        """
+        This is used to generate the pick-and-place action for a single step using GPT.
+        Note that the `communicate` function is called in this function to get the pick point and placing point,but no action is implemented in that function. The action is implemented in this function.
+        Input:
+            headers: the headers for the GPT API
+            frames: the frames of the previous steps
+            messages: the conversation history
+            memory: whether to use memory (Whether to include previous steps' information in the conversation history)
+            system_prompt_path: the path for the system prompt
+            need_box: whether to draw the bounding box
+            corner_limit: the limit of the number of corners to be detected
+            last_step_info: the information of the last step
+            aug_background: whether to augment the background
+            depth_reasoning: whether to use depth reasoning (default is False and recommended not to use)
+            direction_seg: the number of segments for the direction
+            distance_seg: the number of segments for the distance
+            specifier: the specifier for the step's related files
+        Output:
+            frames: the frames of the current step and previous steps
+            last_step_info: the information of the current step
+            test_improvement: the Normalized improvement of the current step comparing to starting configuration
+            curr_coverage: the coverage of the current step before interaction
+            test_coverage: the coverage of the current step after interaction
+        """
         
         self._specifier=specifier
         self.depth_reasoning=depth_reasoning
@@ -1475,21 +1381,19 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
             
             # last_coverage=None
     
-
+        # step 2.2 : Prepared the final system prompt
         init_message={
             "role":"system",
             "content":system_prompt
         }
         
         
-        # if not memory:
-        #     messages=[] # clear the memory 
         
         if len(messages)==0:
             messages.append(init_message)
         
         
-        # messages.append(init_message)
+        # step 3 : Communicate with GPT to get the pick-and-place action
         
         if self.depth_reasoning:
             pick_point,place_point,messages,last_step_info=self.communicate_with_depth(headers=headers,
@@ -1519,8 +1423,11 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         last_step_info["coverage"]=curr_coverage
         
         if not memory:
+            # clear the previous steps' information if "memory" is not enabled
             messages=[]
         
+        # step 4 : Implement the pick-and-place action
+        # step 4.1: get the pre-pick, after-pick, pre-place positions
         pre_pick_pos=pick_point.copy()
         pre_pick_pos[1]+=self.env.action_tool.picker_radius*2
         
@@ -1530,7 +1437,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         pre_place_pos=place_point.copy()
         pre_place_pos[1]=operation_height
           
-        
+        # step 4.2: implement the pick-and-place action
         action_sequence=[[pre_pick_pos, False],
                                 [pick_point, True],
                                 [after_pick_pos, True],
@@ -1558,6 +1465,9 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
     
 
 def test():
+    """
+    This is only used to test a few things
+    """
     # set the parameters
     parser = argparse.ArgumentParser(description='Process some integers.')
     # ['ClothFlattenGPTRGB','ClothFlattenGPTPC','PassWater', 'PourWater', 'PourWaterAmount', 'RopeFlatten', 'ClothFold', 'ClothFlatten', 'ClothDrop', 'ClothFoldCrumpled', 'ClothFoldDrop', 'RopeConfiguration']
@@ -1807,28 +1717,21 @@ def test():
 
 
 
-
-
-
-
-
-
-
-
-
-
 def main():
-    # set the parameters
+    
+    """
+    This is to run experiments of GPT-Fabric smoothing with random starting configurations of fabric.
+    """ 
+    # 0. set the parameters
     parser = argparse.ArgumentParser(description='Process some integers.')
-    # ['ClothFlattenGPTRGB','ClothFlattenGPTPC','PassWater', 'PourWater', 'PourWaterAmount', 'RopeFlatten', 'ClothFold', 'ClothFlatten', 'ClothDrop', 'ClothFoldCrumpled', 'ClothFoldDrop', 'RopeConfiguration']
     parser.add_argument('--env_name', type=str, default='ClothFlattenGPTRGB')
     parser.add_argument('--method_name',type=str,default='RGBD_simple')
     parser.add_argument('--direction_seg',type=int, default=8, help='The number of discretized directions')
     parser.add_argument('--distance_seg',type=int, default=4, help='The number of discretized distance, which are times of fabric side length')
     parser.add_argument('--headless', type=int, default=1, help='Whether to run the environment with headless rendering')
     parser.add_argument('--num_variations', type=int, default=1, help='Number of environment variations to be generated')
-    parser.add_argument('--save_obs_dir', type=str, default='./tests/', help='Path to the saved observation')
-    parser.add_argument('--specifier',type=str,default='_test')
+    parser.add_argument('--save_obs_dir', type=str, default='./tests/', help='Path to the saved observation. The observation will be save in the subfolder under this folder named by the method name.')
+    parser.add_argument('--specifier',type=str,default='_test',help=" The suffix of the observation folder to be saved. This is used to differentiate different runs.")
         
     parser.add_argument('--trails', type=int, default=5, help='The maximum step the interaction can take')
     parser.add_argument('--gif_speed',type=int, default=4, help="This is the speed of gif file. At least 1")
@@ -1839,8 +1742,9 @@ def main():
     
 
     
-
+    # 0.1 setup the method configuration by the method name
     methods={
+        # Maunal generate the pick-and-place action
         "Manual":{
             "env_name":"ClothFlattenGPTRGB",
 
@@ -1848,7 +1752,8 @@ def main():
             "need_box":True,
             
         },
-                
+        
+        # Used in the paper with GPT generating the pick-and-place action  
         "RGBD_simple":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":True,
@@ -1858,6 +1763,7 @@ def main():
             "corner_limit":15,            
         },
         
+        # Let GPT be guided with the goal image. Didn't improve performance in our tests, but you can try it.
         "RGBD_goal_config":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":True,
@@ -1867,6 +1773,7 @@ def main():
             "corner_limit":15,            
         },
         
+        # Let GPT be guided with the previous steps' information. Didn't improve performance in our tests, but you can try it.
         "RGBD_memory":{
         "env_name":"ClothFlattenGPTRGB",
         "need_box":True,
@@ -1877,6 +1784,7 @@ def main():
         "corner_limit":15,            
         },
         
+        # Let GPT be guided with the previous steps' information and goal config. Didn't improve performance in our tests, but you can try it.
         "RGBD_goal_config_memory":{
         "env_name":"ClothFlattenGPTRGB",
         "need_box":True,
@@ -1887,6 +1795,7 @@ def main():
         "corner_limit":15,            
         },
         
+        # Depth-reasoning, deprecated.
         "RGBD_depth_reasoning":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":True,
@@ -1896,6 +1805,8 @@ def main():
             "img_size":720,
             "corner_limit":15, 
         },
+        
+        # In-context learning method. You can change your demo_dir to your own directory. 
         "RGBD_ICL":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":True,
@@ -1907,6 +1818,7 @@ def main():
             "demo_dir":"./demo/Manual_test_14",            
         },
         
+        # Naive method, without both evalution module and image preprocessing module. Ablation use.
         "RGBD_naive":{
             "env_name":"ClothFlattenGPTRGB",
             "need_box":False,
@@ -1919,7 +1831,7 @@ def main():
             
     }
     method=methods[args.method_name]
-    
+    # 0.2: set the save_obs_dir
     save_obs_dir=osp.join(args.save_obs_dir,args.method_name)
     save_obs_dir=save_obs_dir+args.specifier
     
@@ -1929,7 +1841,7 @@ def main():
     else:
         print(f"Directory already exists at {save_obs_dir}, content there will be update\n")
     
-    
+    # 0.3: set the environment
     # Generate and save the initial states for running this environment for the first time
     env_kwargs = env_arg_dict[method['env_name']]
     env_kwargs['use_cached_states'] = False
@@ -1946,7 +1858,7 @@ def main():
         print("using cached states")
     env = normalize(SOFTGYM_ENVS[args.env_name](**env_kwargs))
     
-        
+    # 0.4: set the method parameters  
     manual=method['manual'] if "manual" in method else False
     need_box=method['need_box'] if 'need_box' in method else False
     depth_reasoning=method['depth_reasoning'] if "depth_reasoning" in method else False
@@ -1961,7 +1873,7 @@ def main():
     corner_limit=method['corner_limit'] if 'corner_limit' in method else 10
 
     
-    
+    # 0.5: get the goal image and goal depth
     env.reset()    
     env._set_to_flat()
     env.action_tool.hide()
@@ -1978,10 +1890,10 @@ def main():
     
     
 
-        
+    # 1: start the interaction
     frames = [env.get_image(img_size, img_size)]
     coverages=[]
-    
+    # 1.1: set the method
     method=RGBD_manipulation_part_obs(
         env=env,
         env_name=method["env_name"],
@@ -1999,8 +1911,9 @@ def main():
 
     
 
-
+    # 1.2: start the interaction with args.trails steps
     if manual:
+        # Manual interaction
         last_step_info=None
         for i in range(args.trails):
             frames,last_step_info,improvement,coverage,new_coverage=method.single_step(frames=frames,
@@ -2020,6 +1933,7 @@ def main():
             print('finish step {}'.format(str(i)))   
             
     else:
+        # GPT-reasoning interaction
         messages=[]
         last_step_info=None
         for i in range(args.trails):
@@ -2046,20 +1960,24 @@ def main():
             
             coverages.append([new_coverage,improvement])
 
-            
+            # Generate the gif file of the interaction (and previous steps)
             if save_obs_dir is not None:
                 save_name = osp.join(save_obs_dir, args.env_name + '.gif')
             save_numpy_as_gif(np.array(frames), save_name)
+            
             print('finish step {}'.format(str(i)))
             print(f'current coverage is {new_coverage}, improvement is {improvement}\n')
             print('Video generated and save to {}'.format(save_name))
             print('\n\n\n\n\n')
+            
+            # Early-stop if the Normalized improvement is larger than 0.95
             if improvement>0.95:
                 break
 
     
     
     if save_obs_dir is not None:
+        # Save the final gif recording the whole episode with speedup.
         save_name = osp.join(save_obs_dir, args.env_name + '.gif')
         if args.gif_speed>1:
             frames=frames[::args.gif_speed]
