@@ -19,7 +19,7 @@ This repository is a python implementation of the paper "GPT-Fabric: Folding and
 
 
 
-This simulation environment is based on SoftGym. However, in this repo we made some changes to the original SoftGym, so it's recommended to just use the softgym provided in this repo. 
+This simulation environment is based on [SoftGym](https://github.com/Xingyu-Lin/softgym). However, in this repo we made some changes to the original [SoftGym](https://github.com/Xingyu-Lin/softgym), so it's recommended to just use the SoftGym provided in this repo. 
 
 
 1. Clone this repository.
