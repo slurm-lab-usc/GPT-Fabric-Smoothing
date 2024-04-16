@@ -19,14 +19,18 @@ This repository is a python implementation of the paper "GPT-Fabric: Folding and
 
 
 
-This simulation environment is based on SoftGym. 
+This simulation environment is based on SoftGym. However, in this repo we made some changes to the original SoftGym, so it's recommended to just use the softgym provided in this repo. 
+
 
 1. Clone this repository.
 
-2. [A nice blog](https://danieltakeshi.github.io/2021/02/20/softgym/) written by Daniel Seita may help you get started on SoftGym. You can also refer to the `installation_log.md` for a complete walk-through installation guide.
+2. [A nice blog](https://danieltakeshi.github.io/2021/02/20/softgym/) written by Daniel Seita may help you get started on SoftGym. You can also refer to the `installation_log.md` for a complete walk-through installation guide on SoftGym.
 
 
-3. If you are using Ubuntu, you can try to create the conda environment by `conda env create -f environment_full.yml`. (Works for Ubuntu 22.04, perhaps also viable to other version of Ubuntu)
+
+
+
+
 
 
 4. Before you use the code, you should make sure the conda environment activated(`conda activate gptfab`) and set up the paths appropriately (It's highly recommened to run `. ./prepare_gpt.sh` instead of `conda activate` and set up the following paths): 

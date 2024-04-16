@@ -1,4 +1,4 @@
-name: softgym
+name: gptfab
 channels:
   - defaults
 dependencies:
@@ -18,6 +18,7 @@ dependencies:
   - pip
   - pip:
       - gtimer
+      - OpenAI
       - opencv-python
       - Shapely
       - sk-video
