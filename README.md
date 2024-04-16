@@ -19,11 +19,12 @@ This repository is a python implementation of the paper "GPT-Fabric: Folding and
 
 
 
-This simulation environment is based on SoftGym. You can follow the instructions in [SoftGym](https://github.com/Xingyu-Lin/softgym) to setup the simulator.
+This simulation environment is based on SoftGym. 
 
 1. Clone this repository.
 
-2. [A nice blog](https://danieltakeshi.github.io/2021/02/20/softgym/) written by Daniel Seita may help you get started on SoftGym.
+2. [A nice blog](https://danieltakeshi.github.io/2021/02/20/softgym/) written by Daniel Seita may help you get started on SoftGym. You can also refer to the `installation_log.md` for a complete walk-through installation guide.
+
 
 3. If you are using Ubuntu, you can try to create the conda environment by `conda env create -f environment_full.yml`. (Works for Ubuntu 22.04, perhaps also viable to other version of Ubuntu)
 
