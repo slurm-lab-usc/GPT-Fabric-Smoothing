@@ -26,14 +26,7 @@ This simulation environment is based on SoftGym. However, in this repo we made s
 
 2. [A nice blog](https://danieltakeshi.github.io/2021/02/20/softgym/) written by Daniel Seita may help you get started on SoftGym. You can also refer to the `installation_log.md` for a complete walk-through installation guide on SoftGym.
 
-
-
-
-
-
-
-
-4. Before you use the code, you should make sure the conda environment activated(`conda activate gptfab`) and set up the paths appropriately (It's highly recommened to run `. ./prepare_gpt.sh` instead of `conda activate` and set up the following paths): 
+3. Before you use the code, you should make sure the conda environment activated(`conda activate gptfab`) and set up the paths appropriately (It's highly recommened to run `. ./prepare_gpt.sh` instead of `conda activate` and set up the following paths): 
    ~~~
    export PYFLEXROOT=${PWD}/PyFlex
    export PYTHONPATH=${PYFLEXROOT}/bindings/build:$PYTHONPATH
