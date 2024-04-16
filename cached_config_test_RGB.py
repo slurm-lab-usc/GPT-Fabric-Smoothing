@@ -53,6 +53,8 @@ def main():
     # ['ClothFlattenGPTRGB','ClothFlattenGPTPC','PassWater', 'PourWater', 'PourWaterAmount', 'RopeFlatten', 'ClothFold', 'ClothFlatten', 'ClothDrop', 'ClothFoldCrumpled', 'ClothFoldDrop', 'RopeConfiguration']
     parser.add_argument('--env_name', type=str, default='ClothFlattenGPTRGB')
     parser.add_argument('--cache_state_path',type=str,default='/cloth_flatten_states_40_test')
+    parser.add_argument('--save_cached_states', type=int, default=0, help='Whether to save the cached states')
+    parser.add_argument('--use_cached_states', type=int, default=1, help='Whether to use the cached states')
     parser.add_argument('--headless', type=int, default=1, help='Whether to run the environment with headless rendering')
     parser.add_argument('--num_variations', type=int, default=10, help='Number of environment variations to be generated')
     parser.add_argument('--save_obs_dir', type=str, default='./10_env_tests', help='Path to the saved observation')    
@@ -157,8 +159,8 @@ def main():
     # 0.2 set the environment
     env_kwargs = env_arg_dict[args.env_name]
     # Generate and save the initial states for running this environment for the first time
-    env_kwargs['use_cached_states'] = True
-    env_kwargs['save_cached_states'] = False
+    env_kwargs['use_cached_states'] = True if args.use_cached_states!=0 else False
+    env_kwargs['save_cached_states'] = True if args.save_cached_states!=0 else False
     env_kwargs['num_variations'] = args.num_variations
     env_kwargs['render'] = True
     env_kwargs['headless'] = args.headless

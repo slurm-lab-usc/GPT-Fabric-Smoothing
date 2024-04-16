@@ -1,4 +1,4 @@
-name: softgym
+name: gptfab
 channels:
   - pytorch
   - conda-forge

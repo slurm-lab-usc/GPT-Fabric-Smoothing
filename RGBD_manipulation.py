@@ -52,7 +52,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
     
     def __init__(self,env,env_name,obs_dir,goal_image,goal_config,goal_depth,re_consider=True,in_context_learning=False,demo_dir="./demo/Manual_test14",img_size=720):
         
-        super().__init__(env=env,env_name=env_name,obs_dir=obs_dir,goal_image=goal_image,goal_config=goal_config,img_size=img_size)
+        super().__init__(env=env,env_name=env_name,obs_dir=obs_dir,goal_image=goal_image,goal_config=goal_config,goal_depth=goal_depth,img_size=img_size)
         self.re_consider=re_consider
         self.in_context_learning=in_context_learning
         self.demo_dir=demo_dir

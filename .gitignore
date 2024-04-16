@@ -20,7 +20,6 @@ PyFlex/bindings/examples/*.gif
 
 build/
 
-tests
 5_step_results
 10_step_results
 20_step_results
