@@ -1,5 +1,5 @@
 # Installation guide
-This is to provide a complete installation guide on GPT-Fabric-Smoothing
+This is to provide a complete installation guide on GPT-Fabric-Smoothing **if you haven't installed `SoftGym`**
 ## Install Softgym
 ### 1
 After clone this repo, create the `gptfab` environment by running `conda env create -f environment.yml`
@@ -53,3 +53,29 @@ A good alternative to this is to put them in a `.sh` file, my version is `prepar
 ### 5 
 Then you can verify the installation by executing `python RGBD_manipulation`
 
+
+
+## Installation guide for users who **have installed "SoftGym"**
+
+## 1: Install GPT-Fabric smoothing repo.
+## 2: Make changes to the SoftGym original folder
+1. Copy paste essential files into SoftGym folder:
+    - cloth_flatten_states_40_test
+    - cloth_flatten_states_40_test_22
+    - demo
+    - system_prompts
+    - tests
+    - cached_config_test_RGB.py
+    - GPT-API-Key.txt
+    - manipulation.py
+    - prepare_gpt.sh (Change the conda environment in the first line `conda activate gptfab-smoothing` to your conda environment for running `SoftGym`)
+    - RGBD_manipulation.py
+
+2. Replace several files inside the orginal SoftGym folder:
+    - GPT_Fabric FOLDER/softgym/registered_env.py -> Softgym FOLDER/softgym/registered_env.py
+    - GPT_Fabric FOLDER/softgym/envs/cloth_env.py -> Softgym FOLDER/softgym/env/close_env.py
+    - GPT_Fabric FOLDER/softgym/envs/cloth_flatten.py -> Softgym FOLDER/softgym/env/close_flatten.py
+    - GPT_Fabric FOLDER/softgym/utils/camera_utils.py -> Softgym FOLDER/softgym/utils/camera_utils.py
+
+3. Install OpenAI: `pip install OpenAI` 
+4. Setting the working directory to the original SoftGym folder, run `. ./prepare_gpt.sh`, then verify the installation by executing `python RGBD_manipulation`.

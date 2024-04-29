@@ -1,4 +1,4 @@
-name: gptfab
+name: gptfab-smoothing
 channels:
   - defaults
 dependencies:
