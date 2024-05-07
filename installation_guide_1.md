@@ -38,9 +38,9 @@ nvidia-docker run \
 Then you should be entering the Docker and inside Docker:
 ```
 root@9ac1efa91ca9:/workspace# cd GPT-Fabric-Smoothing /
-root@9ac1efa91ca9:/workspace/softgym# export PATH="PATH_TO_CONDA/bin:$PATH"
-root@9ac1efa91ca9:/workspace/softgym# . ./prepare_1.0.sh 
-(gptfab-smoothing) root@9ac1efa91ca9:/workspace/softgym# . ./compile_1.0.sh
+root@9ac1efa91ca9:/workspace/GPT-Fabric-Smoothing# export PATH="PATH_TO_CONDA/bin:$PATH"
+root@9ac1efa91ca9:/workspace/GPT-Fabric-Smoothing# . ./prepare_1.0.sh 
+(gptfab-smoothing) root@9ac1efa91ca9:/workspace/GPT-Fabric-Smoothing# . ./compile_1.0.sh
 ```
 
 You are all set when seeing at the end.
@@ -55,13 +55,13 @@ Then you can quit the docker by typing `exit`
 
 To run from the "normal" command lines, one can input such lines:
 ```
-conda activate gptfab
+conda activate gptfab-smoothing
 export PYFLEXROOT=${PWD}/PyFlex
 export PYTHONPATH=${PYFLEXROOT}/bindings/build:$PYTHONPATH
 export LD_LIBRARY_PATH=${PYFLEXROOT}/external/SDL2-2.0.4/lib/x64:$LD_LIBRARY_PATH
 ```
 
-A good alternative to this is to put them in a `.sh` file, my version is `prepare_gpt.sh` in the `GPT-FABRIC` folder. I execute by running `. ./prepare_gpt.sh`. The expected command lines should look like this:
+A good alternative to this is to put them in a `.sh` file, my version is `prepare_gpt.sh` in the `GPT-FABRIC` folder. I execute by running `. ./prepare_gpt.sh` (it's also in the repo). The expected command lines should look like this:
 ```
 (base) enyuzhao@blackcoffee:~/code/GPT-Fabric-Smoothing$ . ./prepare_gpt.sh
 (gptfab-smoothing) enyuzhao@blackcoffee:~/code/GPT-Fabric-Smoothing$
