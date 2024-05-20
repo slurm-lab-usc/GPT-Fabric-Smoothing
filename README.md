@@ -88,7 +88,7 @@ You should run the following code with changing the working directory into this 
 
 4. Run following code
     ```
-    python 10_config_test_RGB.py --cache_state_path cloth_flatten_states_40_test --num_variations 20 --save_obs_dir ./1_20_config_test_5 --method_name RGBD_simple --reps 1 --trails 5 --starting_config 0
+    python cached_config_test_RGB.py --cache_state_path cloth_flatten_states_40_test --num_variations 20 --save_obs_dir ./1_20_config_test_5 --method_name RGBD_simple --reps 1 --trails 5 --starting_config 0
     ```
 
 You will be able to see the result in the `1_20_config_test_5/RGBD_simple` folder. The folder structure looks like this:
