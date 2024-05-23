@@ -12,7 +12,7 @@ Context:
 
 
 Input:
-- Processed image:  You will take the top-down image of the cloth. In that image, there will be a cloth which is the cloth to smooth. The cloth's shape is a square. The cloth has two sides, the orange side is the "upper side" and the pink side is the "lower side". There will also be blue dots on the cloth which are the corners detected by the Shi-Tomasi corner detection algorithm, I will also provide the corresponding pixel coordinates of those corners. There will also be a black circle which represents the center point of the cloth. The pixel coordinate of the center point will also be provided. There will also be a blue rectangular which serves as the bounding box of the cloth that you might find useful to determine the action. There will also be a red circle representing the last picking point you choose with coordinates provided. 
+- Processed image:  You will take the top-down image of the cloth. In that image, there will be a cloth which is the cloth to smooth. The cloth's shape is a square. The cloth has two sides, the orange side is the "upper side" and the pink side is the "lower side". There will also be blue dots on the cloth which are the corners detected by the Shi-Tomasi corner detection algorithm, I will also provide the corresponding pixel coordinates of those corners. There will also be a black circle which represents the center point of the cloth. The pixel coordinate of the center point will also be provided. There will also be a blue rectangular which serves as the bounding box of the cloth that you might find useful to determine the action. There will also be a red circle representing the last picking point you choose with the coordinates provided. 
 
 
 - Coverage: You will also receive the current coverage of the cloth as the ultimate goal is to maximize the coverage of the cloth (maximum is 1)
@@ -35,7 +35,7 @@ Strategy:
 
         2. Avoid the detected corners that are not on the edge of the cloth unless the corner is an actual corner that's got folded on top.
 
-        3. Also, avoid picking the corners near the last picking point and its symmetric point. Ideally the new picking point shouldn't be with 100 pixel range of those two points. For example: If the last picking point is [x,y], then for any point B [a,b], if x-100 < a < x+100 and y-100 < b < y+100, then that point B [a,b] is deemed as being near to the last picking point. 
+        3. Also, avoid picking the corners near the last picking point and its symmetric point. Ideally the new picking point shouldn't be within 100 pixel range of those two points. For example: If the last picking point is [x,y], then for any point B [a,b], if x-100 < a < x+100 and y-100 < b < y+100, then that point B [a,b] is deemed as being near to the last picking point. 
   
 
 
@@ -65,7 +65,7 @@ For the distance, you can choose from :
 
 [0.1, 0.25, 0.5, 0.75, 1.0]
 
-These representing the scale of the cloth's side length. 0.1 is mostly used in the final stages when the coverage is more than 0.8.
+These represent the scale of the cloth's side length. 0.1 is mostly used in the final stages when the coverage is more than 0.8.
 **You must confine your choice of moving direction and moving distance within those choices.**
 
 
@@ -77,7 +77,7 @@ Explain how you make the decision:
 
 1. Which corner do you pick and why do you choose this picking point?
 
-2. If last pick point is provided, do you think the pick point this point is same or near the pick point you chosen last time? Remember that if the new picking point is within 100 pixel range of those two points is deemed as not ideal picking points. For example: If the last picking point is [x,y], then for any point B [a,b], if (x-100 < a < x+100) and (y-100 < b < y+100), then that point B [a,b] is deemed as being near to the last picking point. Please make sure the chosen picking point is not near to either the last picking point or its symmetric point.
+2. If the last pick point is provided, do you think the pick point chosen this time is same or near the pick point you chose last time? Remember that if the new picking point is within 100 pixel range of those two points is deemed as not ideal picking points. For example: If the last picking point is [x,y], then for any point B [a,b], if (x-100 < a < x+100) and (y-100 < b < y+100), then that point B [a,b] is deemed as being near to the last picking point. Please make sure the chosen picking point is not near to either the last picking point or its symmetric point.
 
 
 3. What's the spatial location relationship between the center point and the picking point? Please describe in such format:

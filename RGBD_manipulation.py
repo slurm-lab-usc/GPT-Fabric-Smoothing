@@ -332,7 +332,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         
         
         text_correct_message="""
-        I am providing you the visualization result of your predicted pick-and-place action. In the image you can see a green circle which is your predicted picking point and a green arrow which pointing to the your predicted move direction and a purple circle at the end of that arrow denoting the estimated placing point.\n
+        I am providing you with the visualization result of your predicted pick-and-place action. In the image you can see a green circle which is your predicted picking point and a green arrow which points to your predicted move direction and a purple circle at the end of that arrow denoting the estimated placing point.\n
         """
         
         if self.depth_reasoning:
@@ -355,12 +355,12 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
             
             
             if pick_check and pick_oppo_check:
-                position_message="By calculation, the chosen picking point is not near the last picking point or it's symetric point, you can stick with this picking point."
+                position_message="By calculation, the chosen picking point is not near the last picking point or its symmetric point, you can stick with this picking point."
                 
             elif pick_check:
-                position_message=f"By calculation, the chosen picking point is near the last picking point's symetric point. The chosen picking point is [{pick_pixel[0]},{pick_pixel[1]}] and the last picking point's symetric point is [{last_pick_point_oppo[0]},{last_pick_point_oppo[1]}] so the pick point is within 100 pixel range of that point, please choose another point to pick."
+                position_message=f"By calculation, the chosen picking point is near the last picking point's symmetric point. The chosen picking point is [{pick_pixel[0]},{pick_pixel[1]}] and the last picking point's symmetric point is [{last_pick_point_oppo[0]},{last_pick_point_oppo[1]}] so the pick point is within 100 pixel range of that point, please choose another point to pick."
             else:
-                position_message=f"By calculation, the chosen picking point is near the last picking point. The chosen picking point is [{pick_pixel[0]},{pick_pixel[1]}] and the last picking point is [{last_pick_point[0]},{last_pick_point[1]}] so the pick point is within 100 pixel range of that point, please choose another point to pick."
+                position_message=f"By calculation, the chosen picking point is near the last picking point. The chosen picking point is [{pick_pixel[0]},{pick_pixel[1]}] and the last picking point is [{last_pick_point[0]},{last_pick_point[1]}] so the picking point is within 100 pixel range of that point, please choose another point to pick."
                 
 
             text_correct_message+=position_message
@@ -422,11 +422,11 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         
         # 3. Get the result of both checks and generate the correction message w.r.t different check results.
         if direction_check and pick_check and pick_oppo_check:
-            direction_message="\n By calculating the pick point you choose and center point, the direction starting from the center point to the picking point is roughly "+str_direction+". The direction you predicted falls in the acceptable range."
+            direction_message="\n By calculating the pick point you choose and the center point, the direction starting from the center point to the picking point is roughly "+str_direction+". The direction you predicted falls in the acceptable range."
         elif pick_check and pick_oppo_check:
-            direction_message="\n The picking point is a acceptable choice as it's not near to last picking point or it's symmetric point. But by calculating the pick point you choose and center point, the direction starting from the center point to the picking point is roughly "+str_direction+". The direction you predicted doesn't falls in the acceptable range. Please use "+str_direction+"as the moving direction if you want to pick the same picking point ."
+            direction_message="\n The picking point is an acceptable choice as it's not near to the last picking point or its symmetric point. But by calculating the pick point you choose and center point, the direction starting from the center point to the picking point is roughly "+str_direction+". The direction you predicted doesn't fall in the acceptable range. Please use "+str_direction+"as the moving direction if you want to pick the same picking point."
         else:
-            direction_message="\n The picking point is not an accept choice as it's near to last picking point or it's symmetric point. The predicted moving direction is also incorrect."
+            direction_message="\n The picking point is not an accept choice as it's near to last picking point or its symmetric point. The predicted moving direction is also incorrect."
             
         check_result=direction_check and pick_oppo_check and pick_check
         
@@ -434,7 +434,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
 
         correction_message="""
         
-        Based on the assist of previous calculation, do you think your predicted move will help flatten the fabric? If so, you can repeat your answer. If you don't think this move will help flatten the fabric, you should give a new prediction following the same output format.
+        Based on the assistance of the previous calculation, do you think your predicted move will help flatten the fabric? If so, you can repeat your answer. If you don't think this move will help flatten the fabric, you should give a new prediction following the same output format.
         
         """
         
@@ -695,7 +695,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
             last_pick_point_oppo=None
             text_user_prompt={
             "type":"text",
-            "text":coverage_message+"I am providing you the processed image of the current situation of the cloth to be smoothened. The blue points that you can see is the corners detected by Shi-Tomasi corner detector and here is their corresponding pixel:\n"+corners_str+"\n\nAnd the black point represents the center point of the cloth which is the center point of the cloth's bounding box. Its pixel is "+center_point_str+"\n\nJudging from the input image and the pixel coordinates of the corners and center point, please making the inference following the strategy and output the result using the required format."
+            "text":coverage_message+"I am providing you the processed image of the current situation of the cloth to be smoothened. The blue points that you can see are the corners detected by Shi-Tomasi corner detector and here is their corresponding pixel:\n"+corners_str+"\n\nAnd the black point represents the center point of the cloth which is the center point of the cloth's bounding box. Its pixel is "+center_point_str+"\n\nJudging from the input image and the pixel coordinates of the corners and center point, please make the inference following the strategy and output the result using the required format."
         }
         else:
             # This step is not the first step
@@ -711,7 +711,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
             
             text_user_prompt={
             "type":"text",
-            "text":coverage_message+"I am providing you the processed image of the current situation of the cloth to be smoothened. The blue points that you can see is the corners detected by Shi-Tomasi corner detector and here is their corresponding pixel:\n"+corners_str+"\n\nAnd the black point represents the center point of the cloth which is the center point of the cloth's bounding box. Its pixel is "+center_point_str+"\n\n The red points are the pick point chosen last time and its symmetric point. Its pixel is "+last_pick_point_str+", and it's symmetric point's pixel is "+last_pick_point_oppo_str+". It's advised to pick points that are not near those two points.\n\nJudging from the input image and the pixel coordinates of the corners and center point, please making the inference following the strategy and output the result using the required format."
+            "text":coverage_message+"I am providing you the processed image of the current situation of the cloth to be smoothened. The blue points that you can see are the corners detected by Shi-Tomasi corner detector and here is their corresponding pixel:\n"+corners_str+"\n\nAnd the black point represents the center point of the cloth which is the center point of the cloth's bounding box. Its pixel is "+center_point_str+"\n\n The red points are the pick point chosen last time and its symmetric point. Its pixel is "+last_pick_point_str+", and its symmetric point's pixel is "+last_pick_point_oppo_str+". It's advised to pick points that are not near those two points.\n\nJudging from the input image and the pixel coordinates of the corners and center point, please make the inference following the strategy and output the result using the required format."
         }
                         
 
