@@ -1182,7 +1182,7 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
                     direction_seg=8,
                     distance_seg=4,
                     specifier="init"):
-        
+        start_time=time.time()
         """
         This is used to generate the pick-and-place action for a single step using GPT.
         Note that the `communicate` function is called in this function to get the pick point and placing point,but no action is implemented in that function. The action is implemented in this function.
@@ -1436,7 +1436,10 @@ class RGBD_manipulation_part_obs(RGB_manipulation):
         
         pre_place_pos=place_point.copy()
         pre_place_pos[1]=operation_height
-          
+        
+        end_time=time.time()
+        
+        print(f"Time used for this step (before rendering) is {end_time-start_time}")  
         # step 4.2: implement the pick-and-place action
         action_sequence=[[pre_pick_pos, False],
                                 [pick_point, True],
@@ -1934,11 +1937,13 @@ def main():
             
     else:
         # GPT-reasoning interaction
+        
         messages=[]
         last_step_info=None
+        steps_times=[]
         for i in range(args.trails):
             # this is using gpt api to automate the whole process
-            
+            start_time=time.time()
             frames,messages,last_step_info,improvement,coverage,new_coverage=method.gpt_single_step(headers=headers,
                                             frames=frames,
                                             messages=messages,
@@ -1958,7 +1963,11 @@ def main():
                 json_string=json.dumps(messages)
                 file.write(json_string+'\n')
             
+            end_time=time.time()
+            time_used_this_step=end_time-start_time
+            
             coverages.append([new_coverage,improvement])
+            steps_times.append(time_used_this_step)
 
             # Generate the gif file of the interaction (and previous steps)
             if save_obs_dir is not None:
@@ -1967,6 +1976,7 @@ def main():
             
             print('finish step {}'.format(str(i)))
             print(f'current coverage is {new_coverage}, improvement is {improvement}\n')
+            print(f'time used this step is {time_used_this_step}\n')
             print('Video generated and save to {}'.format(save_name))
             print('\n\n\n\n\n')
             
@@ -1994,7 +2004,9 @@ def main():
         
     for coverage in coverages:
         print("-----------------------\n")
-        print(coverage) 
+        print(coverage)
+        
+    print(f"Average time used for each step is {np.mean(steps_times)}\n") 
 
 
 
