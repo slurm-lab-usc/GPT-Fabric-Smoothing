@@ -113,9 +113,6 @@ We also provide several parameters for more control of the manipulation:
 - `gif_speed`: The speed multiple the recorded file. Default to be 4 (Meaning the .gif file will be 4x faster) 
 - `save_obs_dir`: where to store the observation (and other related files) of this rollout. Defualt to be `./10_env_tests`.
 
-## License
-
-Coming soon
 
 ## Acknowledgements
 
