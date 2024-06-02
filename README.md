@@ -1,5 +1,5 @@
 # GPT-Fabric: Folding and Smoothing Fabric by Leveraging Pre-Trained Foundation Models
-**Vedant Raval*, Enyu Zhao*, Hejia Zhang, Stefanos Nikolaidis, Daniel Seita**
+**Vedant Raval\*, Enyu Zhao\*, Hejia Zhang, Stefanos Nikolaidis, Daniel Seita**
 
 **University of Southern California**
 
