@@ -7,6 +7,8 @@ This repository is a python implementation of the paper "GPT-Fabric: Folding and
 
 [Website](https://sites.google.com/usc.edu/gpt-fabrics/home) | [ArXiv: Coming soon]()
 
+**Important Update: According to OpenAI, the "gpt-4-vision-preview" model checkpoint used in GPT-Fabric-Smoothing is going to be deprecated. It's encouraged to use GPT-4o instead**
+
 ## Table of Contents
 * [Installation](#Installation)
 * [GPT-Fabric-smoothing,zero-shot](#evaluating-gpt-fabric-in-zero-shot-setting-with-random-starting-config)
