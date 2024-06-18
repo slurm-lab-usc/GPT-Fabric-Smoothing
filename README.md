@@ -5,7 +5,7 @@
 
 This repository is a python implementation of the paper "GPT-Fabric: Folding and Smoothing Fabric by Leveraging Pre-Trained Foundation Models", submitted to IROS 2024. This repository contains the code used to run the GPT-fabric simulation experiments for fabric smoothing and heavily built upon [SoftGym](https://github.com/Xingyu-Lin/softgym). The code for performing fabric smoothing can be found in the repo [GPT-Fabric-Folding](https://github.com/slurm-lab-usc/GPT-fabric-folding/tree/main)
 
-[Website](https://sites.google.com/usc.edu/gpt-fabrics/home) | [ArXiv: Coming soon]()
+[Website](https://sites.google.com/usc.edu/gpt-fabrics/home) | [ArXiv](https://arxiv.org/pdf/2406.09640)
 
 **Important Update: According to OpenAI, the "gpt-4-vision-preview" model checkpoint used in GPT-Fabric-Smoothing is going to be deprecated. It's encouraged to use GPT-4o instead**
 
