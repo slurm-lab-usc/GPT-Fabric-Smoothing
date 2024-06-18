@@ -118,7 +118,24 @@ We also provide several parameters for more control of the manipulation:
 
 ## Acknowledgements
 
-Coming soon
+We thank Yue Wang and Jiageng Mao for advice on using GPT-4, and I-Chun Liu for helpful writing feedback.
+
+
+If you find our work useful, kindly consider citing:
+
+```
+@article{GPTFabric2024,
+
+    title   = {GPT-Fabric: Folding and Smoothing Fabric by Leveraging Pre-Trained Foundation Models},
+
+    author  = {Vedant Raval and Enyu Zhao and Hejia Zhang and Stefanos Nikolaidis and Daniel Seita},
+
+    journal = {arXiv preprint arXiv:2406.09640},
+
+    Year    = {2024}
+
+}
+```
 
 ## Contact
 
